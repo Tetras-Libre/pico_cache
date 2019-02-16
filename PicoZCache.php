@@ -12,8 +12,6 @@ class PicoZCache extends AbstractPicoPlugin
 {
 
     const API_VERSION=2;
-    
-    protected $enabled = "false";
     protected $dependsOn = array();
 
     private $cacheDir = 'content/cache/';
@@ -47,12 +45,12 @@ class PicoZCache extends AbstractPicoPlugin
     public function onRequestUrl(&$url)
     {
         //replace any character except numbers and digits with a '-' to form valid file names
-        $this->cacheFileName = $this->cacheDir . preg_replace('/[^A-Za-z0-9_\-]/', '_', $url) . $cache_extension;
+        $this->cacheFileName = $this->cacheDir . preg_replace('/[^A-Za-z0-9_\-]/', '_', $url) . '.html';
 
         //if a cached file exists and the cacheTime is not expired, load the file and exit
         if ($this->doCache && file_exists($this->cacheFileName) && (time() - filemtime($this->cacheFileName)) < $this->cacheTime) {
             header("Expires: " . gmdate("D, d M Y H:i:s", $this->cacheTime + filemtime($this->cacheFileName)) . " GMT");
-            ($this->cacheXHTML) ? header('Content-Type: application/xhtml+xml');
+            ($this->cacheXHTML) ? header('Content-Type: application/xhtml+xml') : header('Content-Type: text/html');
             die(readfile($this->cacheFileName));
         }
     }
