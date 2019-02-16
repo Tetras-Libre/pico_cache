@@ -25,7 +25,7 @@ To *clear the cache*, remove the files from the cache folder, or delete the whol
 
 + Make sure the directory in which the cache directory shall be created automatically has the appropriate permissions.
 + Make sure the cache directory, if created manually, has the right permission for the server to read and write files to.
-+ If your site uses multiple protocols, set the *base_url* parameter in your *config.php* to be protocol independent, like `$config['base_url'] = '//example.com';`
++ If your site uses multiple protocols, set the *base_url* parameter in your *config.yml* to be protocol independent, like `base_url: '//example.com';`
 
 ## Difference between this plugin and Twig caching function
 
