@@ -20,27 +20,13 @@ class PicoZCache extends AbstractPicoPlugin
     private $cacheXHTML = false;
     private $cacheFileName;
 
-    public function onConfigLoaded(array &$settings)
-    {
-        if (isset($config['cache_dir'])) {
-
-            // ensure cache_dir ends with '/'
-            $lastchar = substr($config['cache_dir'], -1);
-            if ($lastchar !== '/') {
-                $config['cache_dir'] = $config['cache_dir'].'/';
-            }
-            $this->cacheDir = $config['cache_dir'];
-        }
-        if (isset($config['cache_time'])) {
-            $this->cacheTime = $config['cache_time'];
-        }
-        if (isset($config['cache_enabled'])) {
-            $this->doCache = $config['cache_enabled'];
-        }
-        if (isset($config['cache_xhtml_output'])) {
-            $this->cacheXHTML = $config['cache_xhtml_output'];
-        }
-    }
+	public function onConfigLoaded(array &$config)
+	{
+		$this->doCache = $this->getPluginConfig('enabled', false);
+		$this->cacheTime = $this->getPluginConfig('time', 604800);
+		$this->cacheXHTML = $this->getPluginConfig('xhtml_output', false);
+		$this->cacheDir = trim($this->getPluginConfig('dir', 'content/cache/'),'/').'/';
+	}
 
     public function onRequestUrl(&$url)
     {
