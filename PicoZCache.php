@@ -23,6 +23,7 @@ class PicoZCache extends AbstractPicoPlugin
 
     public function onConfigLoaded(array &$settings)
     {
+        global $config;
         if (isset($config['cache_dir'])) {
 
             // ensure cache_dir ends with '/'
