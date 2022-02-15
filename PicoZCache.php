@@ -44,8 +44,8 @@ class PicoZCache extends AbstractPicoPlugin
 
     public function onRequestUrl(&$url)
     {
-        //replace any character except numbers and digits with a '-' to form valid file names
-        $this->cacheFileName = $this->cacheDir . preg_replace('/[^A-Za-z0-9_\-]/', '_', $url) . '.html';
+        $name = $url == "" ? "index" : $url;
+        $this->cacheFileName = $this->cacheDir . preg_replace('/[^A-Za-z0-9_\-]/', '_', $name) . '.html';
 
         //if a cached file exists and the cacheTime is not expired, load the file and exit
         if ($this->doCache && file_exists($this->cacheFileName) && (time() - filemtime($this->cacheFileName)) < $this->cacheTime) {
