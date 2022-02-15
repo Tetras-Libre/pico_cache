@@ -18,6 +18,7 @@ class PicoZCache extends AbstractPicoPlugin
     private $cacheTime = 604800; // 60*60*24*7, seven days
     private $doCache = true;
     private $cacheXHTML = false;
+    private $cacheIgnoreUrlRegex = null;
     private $cacheFileName;
 
     public function onConfigLoaded(array &$settings)
@@ -40,11 +41,17 @@ class PicoZCache extends AbstractPicoPlugin
         if (isset($config['cache_xhtml_output'])) {
             $this->cacheXHTML = $config['cache_xhtml_output'];
         }
+        if (isset($config['cache_ignore_url_regex'])) {
+            $this->cacheIgnoreUrlRegex = $config['cache_ignore_url_regex'];
+        }
     }
 
     public function onRequestUrl(&$url)
     {
-        //replace any character except numbers and digits with a '-' to form valid file names
+        if ($this->cacheIgnoreUrlRegex && preg_match($this->cacheIgnoreUrlRegex, $url)) {
+            // Skip cache for url matching ignore regex
+            return;
+        }
         $this->cacheFileName = $this->cacheDir . preg_replace('/[^A-Za-z0-9_\-]/', '_', $url) . '.html';
 
         //if a cached file exists and the cacheTime is not expired, load the file and exit
@@ -63,7 +70,7 @@ class PicoZCache extends AbstractPicoPlugin
 
     public function onPageRendered(&$output)
     {
-        if ($this->doCache) {
+        if ($this->doCache && $this->cacheFileName) {
             if (!is_dir($this->cacheDir)) {
                 mkdir($this->cacheDir, 0755, true);
             }
