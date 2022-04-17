@@ -15,7 +15,13 @@ cache_enabled: true          # True/False if cache is enabled
 cache_dir: content/cache/    # Directory where cache should be saved
 cache_time: 604800           # Interval between caching (period from one to second cache) in seconds, here is 7 days = 60 * 60 * 24 * 7.
 cache_xhtml_output: false    # If true, XHTML Content-Type header will be sent when loading cache page
+cache_exclude:               # if any of these strings matches the URL request (i.e. everything between the domain/ and any optional URL
+  - file_one                 # query, this page will not be cached. - E.g.: https://mysite.com/file_one?q=null or:
+  - file_two                 # https://mysite.com/file_two won't be cached.
+  - ...                      
 ```
+
+The plugin __will__ cache different queries separately.
 
 ## Cache clearing
 

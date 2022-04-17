@@ -5,6 +5,7 @@
  *
  * @author Maximilian Beck before 2.0, Nepose since 2.0
  * @link https://github.com/Nepose/PicoCache
+ * Improvements by various authoors, gathered by https://github.com/ohnonot (2022)
  * @license http://opensource.org/licenses/MIT
  * @version 2.0
  */
@@ -19,8 +20,9 @@ class PicoZCache extends AbstractPicoPlugin
     private $doCache = true;
     private $cacheXHTML = false;
     private $cacheFileName;
+    private $cacheExclude = array();
 
-    public function onConfigLoaded(array &$settings)
+    public function onConfigLoaded(array &$config)
     {
         if (isset($config['cache_dir'])) {
 
@@ -40,13 +42,21 @@ class PicoZCache extends AbstractPicoPlugin
         if (isset($config['cache_xhtml_output'])) {
             $this->cacheXHTML = $config['cache_xhtml_output'];
         }
+        if (isset($config['cache_exclude'])) {
+            $this->cacheExclude = $config['cache_exclude'];
+        }
     }
 
     public function onRequestUrl(&$url)
     {
-        //replace any character except numbers and digits with a '-' to form valid file names
-        $this->cacheFileName = $this->cacheDir . preg_replace('/[^A-Za-z0-9_\-]/', '_', $url) . '.html';
+        $name = $url == "" ? "index" : $url;
 
+    	if(in_array($name,$this->cacheExclude)) return; 
+
+        $query = (!empty($_GET)) ? '__'.md5(serialize($_GET)) : null;
+        //replace any character except numbers and digits with a '-' to form valid file names
+        $this->cacheFileName = $this->cacheDir . preg_replace('/[^A-Za-z0-9_\-]/', '_', $name.$query) . '.html';
+    	
         //if a cached file exists and the cacheTime is not expired, load the file and exit
         if ($this->doCache && file_exists($this->cacheFileName) && (time() - filemtime($this->cacheFileName)) < $this->cacheTime) {
             header("Expires: " . gmdate("D, d M Y H:i:s", $this->cacheTime + filemtime($this->cacheFileName)) . " GMT");
