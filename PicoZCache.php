@@ -26,7 +26,7 @@ class PicoZCache extends AbstractPicoPlugin
     {
         $this->doCache = $this->getPluginConfig('enabled', false);
         // ensure cache_dir ends with '/'
-        $this->cacheDir = trim($this->getPluginConfig('dir', 'content/cache/'),'/').'/';
+        $this->cacheDir = rtrim($this->getPluginConfig('dir', 'content/zcache/'),'/').'/';
         $this->cacheTime = $this->getPluginConfig('expire', 604800);
         $this->cacheXHTML = $this->getPluginConfig('xhtml_output', false);
         $this->cacheExclude = $this->getPluginConfig('exclude', null);
