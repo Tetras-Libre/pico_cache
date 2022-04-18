@@ -24,34 +24,26 @@ class PicoZCache extends AbstractPicoPlugin
 
     public function onConfigLoaded(array &$config)
     {
-        if (isset($config['cache_dir'])) {
-
-            // ensure cache_dir ends with '/'
-            $lastchar = substr($config['cache_dir'], -1);
-            if ($lastchar !== '/') {
-                $config['cache_dir'] = $config['cache_dir'].'/';
-            }
-            $this->cacheDir = $config['cache_dir'];
-        }
-        if (isset($config['cache_time'])) {
-            $this->cacheTime = $config['cache_time'];
-        }
-        if (isset($config['cache_enabled'])) {
-            $this->doCache = $config['cache_enabled'];
-        }
-        if (isset($config['cache_xhtml_output'])) {
-            $this->cacheXHTML = $config['cache_xhtml_output'];
-        }
-        if (isset($config['cache_exclude'])) {
-            $this->cacheExclude = $config['cache_exclude'];
-        }
+        $this->doCache = $this->getPluginConfig('enabled', false);
+        // ensure cache_dir ends with '/'
+        $this->cacheDir = trim($this->getPluginConfig('dir', 'content/cache/'),'/').'/';
+        $this->cacheTime = $this->getPluginConfig('expire', 604800);
+        $this->cacheXHTML = $this->getPluginConfig('xhtml_output', false);
+        $this->cacheExclude = $this->getPluginConfig('exclude', null);
+        $this->cacheExcludeRegex = $this->getPluginConfig('exclude_regex', null);
     }
 
     public function onRequestUrl(&$url)
     {
         $name = $url == "" ? "index" : $url;
 
-    	if(in_array($name,$this->cacheExclude)) return; 
+        // Skip cache for url matching an excluded page
+    	if($this->cacheExclude && in_array($name,$this->cacheExclude)) return; 
+
+        // Skip cache for url matching exclude regex
+        if ($this->cacheExcludeRegex && preg_match($this->cacheExcludeRegex, $url)) {
+            return;
+        }
 
         $query = (!empty($_GET)) ? '__'.md5(serialize($_GET)) : null;
         //replace any character except numbers and digits with a '-' to form valid file names
