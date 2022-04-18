@@ -15,7 +15,7 @@ class PicoZCache extends AbstractPicoPlugin
     const API_VERSION=2;
     protected $dependsOn = array();
 
-    private $cacheDir = 'content/cache/';
+    private $cacheDir = 'content/zcache/';
     private $cacheTime = 604800; // 60*60*24*7, seven days
     private $doCache = true;
     private $cacheXHTML = false;
