@@ -14,7 +14,8 @@ In config.yml you can change default caching settings:
 PicoZCache:
     # options for PicoZCache plugin
     enabled: false          # True/False if cache is enabled
-    dir: content/zcache     # Directory where cache should be saved
+    dir: content/zcache     # Directory where cache should be saved. If your PHP has permission to do so,
+                            # this can be a directory outside your webroot (leading / vs. no leading /).
     expire: 604800          # Interval between caching (period from one to second cache) in seconds, here is 7 days = 60 * 60 * 24 * 7.
     xhtml_output: false     # If true, XHTML Content-Type header will be sent when loading cache page
     exclude:
