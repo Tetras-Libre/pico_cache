@@ -15,14 +15,14 @@ PicoZCache:
     # options for PicoZCache plugin
     enabled: false          # True/False if cache is enabled
     dir: content/zcache     # Directory where cache should be saved
-    cache_time: 604800      # Interval between caching (period from one to second cache) in seconds, here is 7 days = 60 * 60 * 24 * 7.
+    expire: 604800          # Interval between caching (period from one to second cache) in seconds, here is 7 days = 60 * 60 * 24 * 7.
     xhtml_output: false     # If true, XHTML Content-Type header will be sent when loading cache page
     exclude:
         - contact           # add strings as pages requested by browser, but without queries etc.
         - feed              # will also exclude http://dom.com/feed?page=3 etc.
         - index             # special name, also resolves to /
         - ...               # (PHP: $url)
-    exclude_regex:          # will be compared to $url (as above) with preg_match()
+    exclude_regex: '...'    # will be compared to $url with preg_match() (as above, but without the index exception)
                             # you can use both exclude and exclude_regex, but exclude will be evaluated first.
 ```
 
