@@ -8,32 +8,46 @@ To install the Pico Cache plugin, simply download the `PicoZCache.php` and put i
 `{picoInstallation}/plugins/`.
 
 ## Configuration
+
+Default values are shown. Arrays have no default values.
+
+The plugin will cache pages with different queries individually. Page queries are little strings added to a
+page request:  
+`http://dom.com/tags?q=picocms&page=3` Here, the page is `tags` and the query is `q=picocms&page=3`.
  
-In config.yml you can change default caching settings:
 ```yaml
 PicoZCache:
-    # options for PicoZCache plugin
-    enabled: false          # True/False if cache is enabled
-    dir: content/zcache     # Directory where cache should be saved. If your PHP has permission to do so,
-                            # this can be a directory outside your webroot (leading / vs. no leading /).
-    expire: 604800          # Interval between caching (period from one to second cache) in seconds, here is 7 days = 60 * 60 * 24 * 7.
-    xhtml_output: false     # If true, XHTML Content-Type header will be sent when loading cache page
-    exclude:
-        - contact           # add strings as pages requested by browser, but without queries etc.
-        - feed              # will also exclude http://dom.com/feed?page=3 etc.
-        - index             # special name, also resolves to /
-        - ...               # (PHP: $url)
-    exclude_regex: '...'    # will be compared to $url with preg_match() (as above, but without the index exception)
-                            # you can use both exclude and exclude_regex, but exclude will be evaluated first.
-```
+    enabled: false
 
-The plugin __will__ cache different queries separately.
+    dir: content/zcache        # Directory where cache should be saved. If your PHP has permission to do so,
+                               # this can be a directory outside your webroot (leading / vs. no leading /).
+
+    expires: 0                 # Interval between caching (cached files will be overwritten after that many seconds,
+                               # also sends Expires header to client). The default 0 is to never overwite cached files.
+                               # This is useful if you have some method of watching for changes (see script below).
+
+    xhtml_output: false        # If true, XHTML Content-Type header will be sent when loading cache page
+
+    exclude:                   # Never cache these pages (as requested by browser, but without queries)
+        - contact
+        - feed
+        - index                # special name, also resolves to /
+
+    exclude_regex: no default  # will be compared to $url with preg_match() (as above, but without the index exception)
+                               # you can use both exclude and exclude_regex, but exclude will be evaluated first.
+
+    ignore_query: false        # If enabled, pages with different queries will not be cached individually.
+    ignore_query_exclude:
+        - tags                 # These pages will be cached individually with their queries
+        - search
+        - index
+```
 
 ## Cache clearing
 
-To *clear the cache*, remove the files from the cache folder, or delete the whole cache folder.
+To clear the cache, remove the files from the cache folder, or delete the whole cache folder (it will be recreated).
 
-I recommend to set up a little script that will clear out the cache whenever content changes, e.g.:
+I recommend to set up a little daemon script that will clear out the cache whenever content changes, e.g.:
 
 ~~~ sh
 #!/bin/sh
@@ -44,10 +58,10 @@ dir="$1"; cache="$2"
 printf "Directory to watch: %s\nCache to delete: %s\n" "$dir" "$cache"
 
 delete() {
-	printf '%s: %s\n' "Events" "$1"
-	[ "${1##*,}" = ISDIR ] && printf "Not interested in mere directories.\n" && return
-	printf "File changes detected! Let's delete stuff...\n"
-	rm -v "$cache"/*.html 2>&1
+    printf '%s: %s\n' "Events" "$1"
+    [ "${1##*,}" = ISDIR ] && printf "Not interested in mere directories.\n" && return
+    printf "File changes detected! Let's delete stuff...\n"
+    rm -v "$cache"/*.html 2>&1
 }
 
 while :; do
@@ -60,18 +74,22 @@ done
 
 ## Common Pitfalls
 
-+ Make sure the directory in which the cache directory shall be created automatically has the appropriate permissions.
++ Make sure the directory in which the cache directory shall be created has the appropriate permissions.
 + Make sure the cache directory, if created manually, has the right permission for the server to read and write files to.
 + If your site uses multiple protocols, set the *base_url* parameter in your *config.yml* to be protocol independent, like `base_url: '//example.com';`
 
 ## Difference between this plugin and Twig caching function
 
-Pico CMS offers for you function of Twig caching, which caches Twig templates as plain PHP files. Of course this omits stage of Twig parsing, but such cache still requires Pico to enable all other dependencies, libraries, plugins and do Markdown parsing.
+Pico CMS offers Twig caching, which caches Twig templates as plain PHP files. Of course this omits stage of Twig parsing, but such cache still requires Pico to enable all other dependencies, libraries, plugins and do Markdown parsing.
 
-On the other hand comes my plugin, which does caching entire page to HTML files. This omits both parsing by Twig and Parsedown and additionally lets Pico stop doing its job at half of work, due to loading HTML file immediately when URL address is known. The plugin just saves HTML source of every visited page at first time, so when next user will visit such page, its HTML source will be shown instead running parsers return.
+On the other hand comes this plugin, which caches entire pages to HTML files. This omits both parsing by Twig and Parsedown and additionally lets Pico stop doing its job halfway and load the HTML file immediately when the URL address is known. The plugin just saves HTML source of every visited page at first visit so on subsequent visits this HTML source will be shown instead of parsing the content.
 
 On my system the decrease in response time is staggering, almost ten-fold.
 
 ## Credits
 
-The plugin was mostly done by [glumb](https://github.com/glumb/pico_cache), but for Pico 0.8. I've modified it to be compatible with Pico 2.x logic.
+Forked and re-forked from these repos:  
+https://github.com/glumb/pico_cache  
+https://github.com/Nepose/pico_cache  
+https://github.com/Tetras-Libre/pico_cache
+
