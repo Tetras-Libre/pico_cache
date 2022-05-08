@@ -15,22 +15,20 @@ class PicoZCache extends AbstractPicoPlugin
     const API_VERSION=2;
     protected $dependsOn = array();
 
-    private $cacheDir = 'content/zcache/';
-    private $cacheTime = 604800; // 60*60*24*7, seven days
     private $doCache = true;
-    private $cacheXHTML = false;
-    private $cacheFileName;
-    private $cacheExclude = array();
+    private $FileName;
+    protected $enabled = false;
 
     public function onConfigLoaded(array &$config)
     {
-        $this->doCache = $this->getPluginConfig('enabled', false);
         // ensure cache_dir ends with '/'
-        $this->cacheDir = rtrim($this->getPluginConfig('dir', 'content/zcache/'),'/').'/';
-        $this->cacheTime = $this->getPluginConfig('expire', 604800);
-        $this->cacheXHTML = $this->getPluginConfig('xhtml_output', false);
-        $this->cacheExclude = $this->getPluginConfig('exclude', null);
-        $this->cacheExcludeRegex = $this->getPluginConfig('exclude_regex', null);
+        $this->Dir = rtrim($this->getPluginConfig('dir', 'content/zcache/','content/zcache/'),'/').'/';
+        $this->Time = $this->getPluginConfig('expires', 0);
+        $this->XHTML = $this->getPluginConfig('xhtml_output', false);
+        $this->Exclude = $this->getPluginConfig('exclude', null);
+        $this->ExcludeRegex = $this->getPluginConfig('exclude_regex', null);
+        $this->IgnoreQuery = $this->getPluginConfig('ignore_query', false);
+        $this->IgnoreQueryExclude = $this->getPluginConfig('ignore_query_exclude', null);
     }
 
     public function onRequestUrl(&$url)
@@ -38,22 +36,35 @@ class PicoZCache extends AbstractPicoPlugin
         $name = $url == "" ? "index" : $url;
 
         // Skip cache for url matching an excluded page
-    	if($this->cacheExclude && in_array($name,$this->cacheExclude)) return; 
-
-        // Skip cache for url matching exclude regex
-        if ($this->cacheExcludeRegex && preg_match($this->cacheExcludeRegex, $url)) {
+    	if($this->Exclude && in_array($name,$this->Exclude)) {
+            $this->doCache = false;
             return;
         }
+        // Skip cache for url matching exclude regex // untested!
+        if ($this->ExcludeRegex && preg_match($this->ExcludeRegex, $url)) {
+            $this->doCache = false;
+            return;
+        }
+        // add query to name if so configured
+    	if( $this->IgnoreQuery === false || in_array($name,$this->IgnoreQueryExclude) ) {
+            $query = (!empty($_GET)) ? '__'.md5(serialize($_GET)) : null;
+            $name = $name.$query;
+        }
 
-        $query = (!empty($_GET)) ? '__'.md5(serialize($_GET)) : null;
         //replace any character except numbers and digits with a '-' to form valid file names
-        $this->cacheFileName = $this->cacheDir . preg_replace('/[^A-Za-z0-9_\-]/', '_', $name.$query) . '.html';
-    	
+        $this->FileName = $this->Dir . preg_replace('/[^A-Za-z0-9_\-]/', '_', $name) . '.html';
+
         //if a cached file exists and the cacheTime is not expired, load the file and exit
-        if ($this->doCache && file_exists($this->cacheFileName) && (time() - filemtime($this->cacheFileName)) < $this->cacheTime) {
-            header("Expires: " . gmdate("D, d M Y H:i:s", $this->cacheTime + filemtime($this->cacheFileName)) . " GMT");
-            ($this->cacheXHTML) ? header('Content-Type: application/xhtml+xml') : header('Content-Type: text/html');
-            die(readfile($this->cacheFileName));
+        if (file_exists($this->FileName)) {
+            if ($this->Time > 0) {
+                //~ echo time().'<br/>';
+                //~ echo filemtime($this->FileName).'<br/>';
+                //~ echo $this->Time.'<br/>';
+                header("Expires: " . gmdate("D, d M Y H:i:s", $this->Time + filemtime($this->FileName)) . " GMT");
+                ($this->XHTML) ? header('Content-Type: application/xhtml+xml') : header('Content-Type: text/html');
+                if(time() - filemtime($this->FileName) > $this->Time) return;
+            }
+            die(readfile($this->FileName));
         }
     }
 
@@ -66,10 +77,10 @@ class PicoZCache extends AbstractPicoPlugin
     public function onPageRendered(&$output)
     {
         if ($this->doCache) {
-            if (!is_dir($this->cacheDir)) {
-                mkdir($this->cacheDir, 0755, true);
+            if (!is_dir($this->Dir)) {
+                mkdir($this->Dir, 0755, true);
             }
-            file_put_contents($this->cacheFileName, $output);
+            file_put_contents($this->FileName, $output);
         }
     }
 
